@@ -20,7 +20,7 @@ metadata:
         - governance-review
     - name: Staging
       jobs:
-        - deploy-staging
+        - github-release-staging
         - staging-validation
         - jenkins-release-staging
     - name: Production Approval
@@ -28,7 +28,7 @@ metadata:
         - production-approval
     - name: Production
       jobs:
-        - deploy-production
+        - github-release-production
         - jenkins-release-production
     - name: Post-Release
       jobs:
@@ -54,15 +54,8 @@ jobs:
             - Release window: ${{ inputs.release_window }}
             - Unit tests / security scans / approvals: verified
             - Audit evidence: **complete**
-  deploy-staging:
-    needs: governance-review
-    environment: staging
-    uses: ./.cloudbees/workflows/deployer.yaml
-    with:
-      manifest: ${{ inputs.manifest }}
-      environment: ${{ job.environment }}
   staging-validation:
-    needs: deploy-staging
+    needs: github-release-staging
     steps:
       - name: Run smoke tests and release checks
         uses: docker://alpine:3.20
@@ -99,13 +92,6 @@ jobs:
             - Approvers: Release Manager, Security, Application Owner
             - Change ticket: ${{ inputs.change_ticket }}
             - Decision: **approved** (simulated for demo)
-  deploy-production:
-    needs: production-approval
-    environment: prod
-    uses: ./.cloudbees/workflows/deployer.yaml
-    with:
-      manifest: ${{ inputs.manifest }}
-      environment: ${{ job.environment }}
   release-evidence:
     needs: jenkins-release-production
     steps:
@@ -137,8 +123,19 @@ jobs:
     vars: inherit
     secrets: inherit
   jenkins-release-production:
-    needs:
-      - deploy-production
+    needs: github-release-production
     uses: mauiwilliamsgmail/levelupdatabase/.cloudbees/workflows/fintech-product-release.yaml@master
     vars: inherit
     secrets: inherit
+  github-release-staging:
+    needs: governance-review
+    uses: ./.cloudbees/workflows/deployer.yaml
+    with:
+      manifest: ${{ inputs.manifest }}
+      environment: ${{ job.environment }}
+  github-release-production:
+    needs: production-approval
+    uses: ./.cloudbees/workflows/deployer.yaml
+    with:
+      manifest: ${{ inputs.manifest }}
+      environment: ${{ job.environment }}
