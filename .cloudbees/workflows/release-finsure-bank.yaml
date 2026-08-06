@@ -29,6 +29,7 @@ metadata:
     - name: Production
       jobs:
         - deploy-production
+        - jenkins-release-production
     - name: Post-Release
       jobs:
         - release-evidence
@@ -106,7 +107,7 @@ jobs:
       manifest: ${{ inputs.manifest }}
       environment: ${{ job.environment }}
   release-evidence:
-    needs: deploy-production
+    needs: jenkins-release-production
     steps:
       - name: Publish release summary
         uses: docker://alpine:3.20
@@ -131,8 +132,11 @@ jobs:
 
             Release: **COMPLETE**
   jenkins-release-staging:
-    needs:
-      - staging-validation
+    needs: staging-validation
     uses: mauiwilliamsgmail/levelupdatabase/.cloudbees/workflows/fintech-product-release.yaml@master
     vars: inherit
     secrets: inherit
+  jenkins-release-production:
+    needs:
+      - deploy-production
+    uses: mauiwilliamsgmail/levelupdatabase/.cloudbees/workflows/fintech-product-release.yaml@master
