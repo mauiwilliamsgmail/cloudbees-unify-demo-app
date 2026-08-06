@@ -140,3 +140,5 @@ jobs:
     needs:
       - deploy-production
     uses: mauiwilliamsgmail/levelupdatabase/.cloudbees/workflows/fintech-product-release.yaml@master
+    vars: inherit
+    secrets: inherit
